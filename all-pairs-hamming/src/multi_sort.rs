@@ -89,6 +89,7 @@ where
         mut self,
         sketches: &[S],
         radius: usize,
+        left_len:usize,
         results: &mut HashSet<(usize, usize)>,
     ) {
         if self.num_blocks == 0 || self.num_blocks < radius {
@@ -105,7 +106,7 @@ where
             .enumerate()
             .map(|(id, &sketch)| Record { id, sketch })
             .collect();
-        self.similar_pairs_recur(&mut records, Bitset64::new(), results);
+        self.similar_pairs_recur(&mut records, Bitset64::new(), left_len, results);
     }
 
     fn build_masks_and_offsets(&mut self) {
@@ -126,10 +127,11 @@ where
         &self,
         records: &mut [Record<S>],
         blocks: Bitset64,
+        left_len:usize,
         results: &mut HashSet<(usize, usize)>,
     ) {
         if blocks.len() == self.num_blocks - self.radius {
-            self.verify_all_pairs(records, blocks, results);
+            self.verify_all_pairs(records, blocks, left_len, results);
             return;
         }
 
@@ -140,7 +142,7 @@ where
             self.sort_sketches(b, records);
             self.collision_ranges(b, records, &mut ranges);
             for r in ranges.iter().cloned() {
-                self.similar_pairs_recur(&mut records[r], blocks.add(b), results);
+                self.similar_pairs_recur(&mut records[r], blocks.add(b), left_len, results);
             }
         }
     }
@@ -149,6 +151,7 @@ where
         &self,
         records: &[Record<S>],
         blocks: Bitset64,
+        left_len:usize,
         results: &mut HashSet<(usize, usize)>,
     ) {
         for i in 0..records.len() {
@@ -160,6 +163,12 @@ where
                 {
                     debug_assert_ne!(x.id, y.id);
                     // Keeps the tuple order to ease debug.
+                    if left_len > 0 {
+                        if ( x.id <left_len && y.id < left_len ) || (x.id>=left_len&&y.id >=left_len) {
+                            continue;
+                        }
+                    }
+                    println!("x.id={},y.id={}",x.id,y.id);
                     results.insert((x.id.min(y.id), x.id.max(y.id)));
                 }
             }

@@ -169,11 +169,11 @@ impl JaccardSearcher {
 
     /// Searches for all pairs of similar documents within an input radius, returning
     /// triplets of the left-side id, the right-side id, and their distance.
-    pub fn search_similar_pairs(&self, radius: f64) -> Vec<(usize, usize, f64)> {
+    pub fn search_similar_pairs(&self, radius: f64, left_len:usize) -> Vec<(usize, usize, f64)> {
         self.joiner.as_ref().map_or_else(Vec::new, |joiner| {
             // In 1-bit minhash, the collision probability is multiplied by 2 over the original.
             // Thus, we should search with the half of the actual radius.
-            let mut results = joiner.similar_pairs(radius / 2.);
+            let mut results = joiner.similar_pairs(radius / 2., left_len);
             // Modifies the distances.
             results.iter_mut().for_each(|(_, _, d)| *d *= 2.);
             results

@@ -78,7 +78,7 @@ where
 
     /// Finds all similar pairs whose normalized Hamming distance is within `radius`,
     /// returning triplets of the left-side id, the right-side id, and thier distance.
-    pub fn similar_pairs(&self, radius: f64) -> Vec<(usize, usize, f64)> {
+    pub fn similar_pairs(&self, radius: f64, left_len:usize ) -> Vec<(usize, usize, f64)> {
         let dimension = S::dim() * self.num_chunks();
         let hamradius = (dimension as f64 * radius).ceil() as usize;
         if self.shows_progress {
@@ -96,7 +96,7 @@ where
                 continue;
             }
             let r = (j + hamradius + 1 - self.chunks.len()) / self.chunks.len();
-            MultiSort::new().similar_pairs(chunk, r, &mut candidates);
+            MultiSort::new().similar_pairs(chunk, r, left_len, &mut candidates);
 
             if self.shows_progress {
                 eprintln!(

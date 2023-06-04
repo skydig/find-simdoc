@@ -117,7 +117,7 @@ impl CosineSearcher {
     /// * `documents` - List of documents (must not include an empty string).
     /// * `num_chunks` - Number of chunks of sketches, indicating that
     ///                  the number of dimensions in the Hamming space is `num_chunks*64`.
-    pub fn build_sketches<I, D>(mut self, documents: I, num_chunks: usize) -> Result<Self>
+    pub fn build_sketches<I, D>(mut self, documents: I, num_chunks: usize ) -> Result<Self>
     where
         I: IntoIterator<Item = D>,
         D: AsRef<str>,
@@ -216,8 +216,8 @@ impl CosineSearcher {
 
     /// Searches for all pairs of similar documents within an input radius, returning
     /// triplets of the left-side id, the right-side id, and their distance.
-    pub fn search_similar_pairs(&self, radius: f64) -> Vec<(usize, usize, f64)> {
-        self.joiner.as_ref().unwrap().similar_pairs(radius)
+    pub fn search_similar_pairs(&self, radius: f64, left_len:usize) -> Vec<(usize, usize, f64)> {
+        self.joiner.as_ref().unwrap().similar_pairs(radius, left_len)
     }
 
     /// Gets the number of input documents.

@@ -32,6 +32,10 @@ struct Args {
     #[clap(short = 'w', long, default_value = "1")]
     window_size: usize,
 
+    /// how many sketches in left size?
+    #[clap(short = 'l', long, default_value = "0")]
+    left_len: usize,
+
     /// Number of chunks in sketches, indicating that the number of dimensions in the Hamming space
     /// will be 64*#chunks. The larger this value, the more accurate the approximation,
     /// but the more time and memory it takes to search.
@@ -57,6 +61,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let num_chunks = args.num_chunks;
     let seed = args.seed;
     let disable_parallel = args.disable_parallel;
+    let left_len = args.left_len;
 
     let mut searcher = JaccardSearcher::new(window_size, delimiter, seed)?.shows_progress(true);
 
@@ -81,7 +86,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     eprintln!("Finding all similar pairs in sketches...");
     let start = Instant::now();
-    let results = searcher.search_similar_pairs(radius);
+    let results = searcher.search_similar_pairs(radius, left_len);
     eprintln!("Done in {} sec", start.elapsed().as_secs_f64());
 
     println!("i,j,dist");
