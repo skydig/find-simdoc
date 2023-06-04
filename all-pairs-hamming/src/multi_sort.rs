@@ -168,7 +168,7 @@ where
                             continue;
                         }
                     }
-                    println!("x.id={},y.id={}",x.id,y.id);
+                    //println!("x.id={},y.id={}",x.id,y.id);
                     results.insert((x.id.min(y.id), x.id.max(y.id)));
                 }
             }
