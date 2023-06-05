@@ -2,6 +2,7 @@
 use crate::errors::{AllPairsHammingError, Result};
 use crate::sketch::Sketch;
 
+
 /// A naive implementation of similarity self-join on binary sketches in the Hamming space,
 /// taking a quadratic time.
 /// Do NOT use this for large datasets.
@@ -9,6 +10,7 @@ pub struct SimpleJoiner<S> {
     sketches: Vec<Vec<S>>,
     num_chunks: usize,
     shows_progress: bool,
+    cb:fn(usize,usize),
 }
 
 impl<S> SimpleJoiner<S>
@@ -17,11 +19,12 @@ where
 {
     /// Creates an instance, handling sketches of `num_chunks` chunks, i.e.,
     /// in `S::dim() * num_chunks` dimensions.
-    pub const fn new(num_chunks: usize) -> Self {
+    pub const fn new(num_chunks: usize, cb:fn(usize,usize)) -> Self {
         Self {
             sketches: vec![],
             num_chunks,
             shows_progress: false,
+            cb,
         }
     }
 
@@ -66,6 +69,7 @@ where
 
         for i in 0..self.sketches.len() {
             if self.shows_progress && (i + 1) % 10000 == 0 {
+                (self.cb)(i+1, self.sketches.len());
                 eprintln!(
                     "[SimpleJoiner::similar_pairs] Processed {}/{}...",
                     i + 1,
@@ -155,8 +159,9 @@ mod tests {
     fn test_similar_pairs(radius: f64) {
         let sketches = example_sketches();
         let expected = naive_search(&sketches, radius);
-
-        let mut joiner = SimpleJoiner::new(2);
+        fn test_cb (a:usize,b:usize) {
+        }
+        let mut joiner = SimpleJoiner::new(2,test_cb);
         for s in sketches {
             joiner.add([(s & 0xFF) as u8, (s >> 8) as u8]).unwrap();
         }
@@ -173,7 +178,9 @@ mod tests {
 
     #[test]
     fn test_short_sketch() {
-        let mut joiner = SimpleJoiner::new(2);
+        fn test_cb (a:usize,b:usize) {
+        }
+        let mut joiner = SimpleJoiner::new(2,test_cb);
         let result = joiner.add([0u64]);
         assert!(result.is_err());
     }

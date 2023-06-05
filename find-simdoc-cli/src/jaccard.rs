@@ -50,7 +50,9 @@ struct Args {
     #[clap(short = 'p', long)]
     disable_parallel: bool,
 }
-
+fn handle_perc(perc:usize,total:usize) {
+    println!("perc={}/{}", perc,total);
+}
 fn main() -> Result<(), Box<dyn Error>> {
     let args = Args::parse();
 
@@ -63,8 +65,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let disable_parallel = args.disable_parallel;
     let left_len = args.left_len;
 
-    let mut searcher = JaccardSearcher::new(window_size, delimiter, seed)?.shows_progress(true);
-
+    let mut searcher = JaccardSearcher::new(window_size, delimiter, seed, handle_perc)?.shows_progress(true);
     {
         eprintln!("Converting documents into sketches...");
         let start = Instant::now();

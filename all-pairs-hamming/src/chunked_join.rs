@@ -37,18 +37,21 @@ use crate::sketch::Sketch;
 pub struct ChunkedJoiner<S> {
     chunks: Vec<Vec<S>>,
     shows_progress: bool,
+    cb:fn(usize,usize),
 }
 
+//type CallBack=fn(&ChunkedJoiner,u8);
 impl<S> ChunkedJoiner<S>
 where
     S: Sketch,
 {
     /// Creates an instance, handling sketches of `num_chunks` chunks, i.e.,
     /// in `S::dim() * num_chunks` dimensions.
-    pub fn new(num_chunks: usize) -> Self {
+    pub fn new(num_chunks: usize, cb:fn(usize,usize)) -> Self {
         Self {
             chunks: vec![vec![]; num_chunks],
             shows_progress: false,
+            cb,
         }
     }
 
@@ -99,6 +102,7 @@ where
             MultiSort::new().similar_pairs(chunk, r, left_len, &mut candidates);
 
             if self.shows_progress {
+                (self.cb)(j+1, self.chunks.len() );
                 eprintln!(
                     "[ChunkedJoiner::similar_pairs] Processed {}/{}...",
                     j + 1,
@@ -199,12 +203,13 @@ mod tests {
     fn test_similar_pairs(radius: f64) {
         let sketches = example_sketches();
         let expected = naive_search(&sketches, radius);
-
-        let mut joiner = ChunkedJoiner::new(2);
+        fn test_cb(a:usize,b:usize) {
+        }
+        let mut joiner = ChunkedJoiner::new(2,test_cb);
         for s in sketches {
             joiner.add([(s & 0xFF) as u8, (s >> 8) as u8]).unwrap();
         }
-        let mut results = joiner.similar_pairs(radius);
+        let mut results = joiner.similar_pairs(radius,0);
         results.sort_by_key(|&(i, j, _)| (i, j));
         assert_eq!(results, expected);
     }
@@ -218,7 +223,9 @@ mod tests {
 
     #[test]
     fn test_short_sketch() {
-        let mut joiner = ChunkedJoiner::new(2);
+        fn test_cb(a:usize,b:usize) {
+        }
+        let mut joiner = ChunkedJoiner::new(2,test_cb);
         let result = joiner.add([0u64]);
         assert!(result.is_err());
     }

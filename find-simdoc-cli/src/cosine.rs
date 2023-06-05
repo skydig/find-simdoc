@@ -100,7 +100,9 @@ struct Args {
     #[clap(short = 'p', long)]
     disable_parallel: bool,
 }
-
+fn callback(a:usize, b:usize) {
+    println!("{a},{b}");
+}
 fn main() -> Result<(), Box<dyn Error>> {
     let args = Args::parse();
 
@@ -114,7 +116,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let seed = args.seed;
     let disable_parallel = args.disable_parallel;
 
-    let mut searcher = CosineSearcher::new(window_size, delimiter, seed)?.shows_progress(true);
+    let mut searcher = CosineSearcher::new(window_size, delimiter, seed, callback)?.shows_progress(true);
 
     let tf = match tf_weight {
         TfWeights::Binary => None,
@@ -161,7 +163,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     eprintln!("Finding all similar pairs in sketches...");
     let start = Instant::now();
-    let results = searcher.search_similar_pairs(radius);
+    let results = searcher.search_similar_pairs(radius, 0);
     eprintln!("Done in {} sec", start.elapsed().as_secs_f64());
 
     println!("i,j,dist");

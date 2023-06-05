@@ -49,6 +49,7 @@ pub struct JaccardSearcher {
     hasher: MinHasher,
     joiner: Option<ChunkedJoiner<u64>>,
     shows_progress: bool,
+    callback: fn(usize,usize),
 }
 
 impl JaccardSearcher {
@@ -60,7 +61,7 @@ impl JaccardSearcher {
     /// * `delimiter` - Delimiter for recognizing words as tokens in feature extraction.
     ///                 If `None`, characters are used for tokens.
     /// * `seed` - Seed value for random values.
-    pub fn new(window_size: usize, delimiter: Option<char>, seed: Option<u64>) -> Result<Self> {
+    pub fn new(window_size: usize, delimiter: Option<char>, seed: Option<u64>, cb:fn(usize,usize)) -> Result<Self> {
         let seed = seed.unwrap_or_else(rand::random::<u64>);
         let mut seeder = rand_xoshiro::SplitMix64::seed_from_u64(seed);
         let config = FeatureConfig::new(window_size, delimiter, seeder.next_u64())?;
@@ -70,6 +71,7 @@ impl JaccardSearcher {
             hasher,
             joiner: None,
             shows_progress: false,
+            callback:cb,
         })
     }
 
@@ -91,7 +93,7 @@ impl JaccardSearcher {
         I: IntoIterator<Item = D>,
         D: AsRef<str>,
     {
-        let mut joiner = ChunkedJoiner::<u64>::new(num_chunks).shows_progress(self.shows_progress);
+        let mut joiner = ChunkedJoiner::<u64>::new(num_chunks,self.callback).shows_progress(self.shows_progress);
         let extractor = FeatureExtractor::new(&self.config);
 
         let mut feature = vec![];
@@ -159,7 +161,7 @@ impl JaccardSearcher {
             .collect();
         sketches.par_sort_by_key(|&(i, _)| i);
 
-        let mut joiner = ChunkedJoiner::<u64>::new(num_chunks).shows_progress(self.shows_progress);
+        let mut joiner = ChunkedJoiner::<u64>::new(num_chunks, self.callback).shows_progress(self.shows_progress);
         for (_, sketch) in sketches {
             joiner.add(sketch).unwrap();
         }
